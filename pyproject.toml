@@ -1,0 +1,27 @@
+[project]
+name = "fixit"
+version = "1.0.0"
+description = "Campus maintenance requests: report, assign, fix, close."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "mcp_server/tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["B008"]          # FastAPI's Depends() in default arguments is intended
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]
+"mcp_server/tests/*" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["tests/", "mcp_server/tests/"]
