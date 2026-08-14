@@ -1,0 +1,27 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app import rules, services
+from app.db import get_db
+from app.models import User
+from app.rules import Role
+from app.schemas import TicketOut, WorkloadRow
+from app.security import require
+
+router = APIRouter(prefix="/reports", tags=["reports"])
+warden_only = require(Role.WARDEN)
+
+
+@router.get("/overdue", response_model=list[TicketOut])
+def overdue(db: Session = Depends(get_db), user: User = Depends(warden_only)) -> list[TicketOut]:
+    """Overdue tickets, the most overdue first."""
+    now = rules.utcnow()
+    return [
+        services.to_out(t, now)
+        for t in services.visible_tickets(db, user, overdue_only=True, now=now)
+    ]
+
+
+@router.get("/workload", response_model=list[WorkloadRow])
+def workload(db: Session = Depends(get_db), user: User = Depends(warden_only)) -> list[dict]:
+    return services.workload(db)
