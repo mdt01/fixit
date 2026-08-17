@@ -19,6 +19,6 @@ types:
 	$(PY) -m mypy app
 
 security:
-	$(PY) -m bandit -q -r app
+	$(PY) -m bandit -q -r app scripts
 
 check: lint types test security

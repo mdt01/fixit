@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixIt</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
+  h1 { color: #0f766e; margin-bottom: .2rem; }
+  form, .card { border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+  input, select, textarea, button { font: inherit; padding: .4rem; margin: .2rem 0; width: 100%; box-sizing: border-box; }
+  button { background: #0f766e; color: white; border: 0; border-radius: 6px; cursor: pointer; }
+  .overdue { color: #c2410c; font-weight: 600; }
+  .muted { color: #6b7280; font-size: .9rem; }
+  #error { color: #b91c1c; }
+</style>
+</head>
+<body>
+<h1>FixIt</h1>
+<p class="muted">Report a maintenance problem on campus and follow it until it is fixed.</p>
+<p id="error" role="alert"></p>
+
+<form id="login">
+  <label>Email <input name="email" type="email" required></label>
+  <label>Password <input name="password" type="password" required></label>
+  <button>Log in</button>
+</form>
+
+<section id="app" hidden>
+  <p>Logged in as <strong id="who"></strong> <button id="logout" style="width:auto">Log out</button></p>
+  <form id="report" hidden>
+    <h2>Report a problem</h2>
+    <input name="title" placeholder="Short title, e.g. Fan not working" required>
+    <textarea name="description" placeholder="What is wrong?" required></textarea>
+    <input name="location" placeholder="Hostel, block and room" required>
+    <select name="category">
+      <option>electrical</option><option>plumbing</option><option>internet</option>
+      <option>furniture</option><option>cleaning</option><option>other</option>
+    </select>
+    <select name="priority"><option>normal</option><option>urgent</option></select>
+    <button>Submit</button>
+  </form>
+  <h2>Tickets</h2>
+  <div id="tickets"></div>
+</section>
+
+<script>
+let token = null, role = null;
+const $ = (id) => document.getElementById(id);
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: { "Content-Type": "application/json",
+               ...(token ? { Authorization: "Bearer " + token } : {}) },
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.detail || response.statusText);
+  return body;
+}
+
+function show(error) { $("error").textContent = error ? error.message : ""; }
+
+async function refresh() {
+  const list = $("tickets");
+  list.replaceChildren();
+  for (const t of await api("/tickets")) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const title = document.createElement("strong");
+    title.textContent = `#${t.id} ${t.title}`;          // textContent: never innerHTML
+    const meta = document.createElement("p");
+    meta.className = t.overdue ? "overdue" : "muted";
+    meta.textContent = `${t.category} · ${t.location} · ${t.status}` +
+                       ` · due ${t.due_at.slice(0, 16).replace("T", " ")} UTC` +
+                       (t.overdue ? " · OVERDUE" : "");
+    card.append(title, meta);
+    list.append(card);
+  }
+}
+
+$("login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = Object.fromEntries(new FormData(e.target));
+  try {
+    const me = await api("/auth/login", { method: "POST", body: JSON.stringify(form) });
+    token = me.token; role = me.role;
+    $("who").textContent = `${me.name} (${me.role})`;
+    $("login").hidden = true; $("app").hidden = false;
+    $("report").hidden = role !== "student";
+    show(null); await refresh();
+  } catch (err) { show(err); }
+});
+
+$("report").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = Object.fromEntries(new FormData(e.target));
+  try {
+    await api("/tickets", { method: "POST", body: JSON.stringify(form) });
+    e.target.reset(); show(null); await refresh();
+  } catch (err) { show(err); }
+});
+
+$("logout").addEventListener("click", () => location.reload());
+</script>
+</body>
+</html>
