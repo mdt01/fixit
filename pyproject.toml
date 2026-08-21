@@ -19,6 +19,7 @@ ignore = ["B008"]          # FastAPI's Depends() in default arguments is intende
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S105", "S106"]
 "mcp_server/tests/*" = ["S101"]
+".agents/*" = ["S603", "S607", "B904"]   # hooks and checks run git and tools on purpose
 
 [tool.mypy]
 python_version = "3.12"

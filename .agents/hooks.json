@@ -1,0 +1,12 @@
+{
+  "pre_tool": [
+    {"match": "edit_file|run_bash", "command": "python .agents/hooks/guard.py"}
+  ],
+  "post_tool": [
+    {"match": "edit_file", "command": "python .agents/hooks/check_edit.py"}
+  ],
+  "stop": [
+    {"command": "python .agents/hooks/test_guard.py"},
+    {"command": "python .agents/hooks/test_gate.py", "timeout": 300}
+  ]
+}
