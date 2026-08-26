@@ -1,0 +1,5 @@
+# MCP server dependencies (separate environment: the MCP SDK needs newer
+# pydantic and starlette than the API pins).
+mcp>=2.0,<3
+httpx>=0.27
+pytest>=8.0

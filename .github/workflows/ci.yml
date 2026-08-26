@@ -19,3 +19,12 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: make check                     # ruff, mypy, pytest, bandit
 
+  mcp-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r mcp_server/requirements.txt
+      - run: python -m pytest mcp_server/tests -q
