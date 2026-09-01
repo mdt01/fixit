@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import logging
 import secrets
 from collections.abc import Callable
 from datetime import timedelta
@@ -14,6 +15,8 @@ from app.config import TOKEN_HOURS
 from app.db import get_db
 from app.models import User
 from app.rules import Role, utcnow
+
+log = logging.getLogger(__name__)
 
 
 def hash_password(password: str, salt: bytes | None = None) -> str:
@@ -46,6 +49,7 @@ def current_user(authorization: str = Header(default=""), db: Session = Depends(
         raise HTTPException(401, "Log in first: send 'Authorization: Bearer <token>'.")
     user = db.scalar(select(User).where(User.token_hash == token_digest(token)))
     if user is None or user.token_expires is None or user.token_expires < utcnow():
+        log.warning("rejected request with an invalid or expired token")
         raise HTTPException(401, "Your login has expired or is invalid. Log in again.")
     return user
 
@@ -55,6 +59,7 @@ def require(*roles: Role) -> Callable[..., User]:
 
     def checker(user: User = Depends(current_user)) -> User:
         if user.role not in roles:
+            log.warning("user %s (%s) refused: needs %s", user.id, user.role, roles)
             raise HTTPException(403, f"This action needs one of: {', '.join(roles)}.")
         return user
 

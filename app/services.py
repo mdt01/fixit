@@ -1,5 +1,6 @@
 """Ticket operations: apply the rules in app/rules.py to the database."""
 
+import logging
 from datetime import datetime
 
 from sqlalchemy import select
@@ -9,6 +10,8 @@ from app import rules
 from app.models import Comment, Ticket, User
 from app.rules import Category, Role, RuleError, Status
 from app.schemas import TicketIn, TicketOut
+
+log = logging.getLogger(__name__)
 
 
 class NotFound(LookupError):
@@ -85,6 +88,7 @@ def assign(db: Session, warden: User, ticket: Ticket, technician_id: int) -> Tic
     )
     ticket.assignee_id = technician.id
     ticket.status = Status.ASSIGNED
+    log.info("ticket %s assigned to technician %s by %s", ticket.id, technician.id, warden.id)
     db.commit()
     return ticket
 
@@ -111,6 +115,7 @@ def change_status(
         ticket.assignee_id = None
     if new == Status.RESOLVED:
         ticket.resolved_at = now
+    log.info("ticket %s: %s -> %s by user %s", ticket.id, ticket.status, new, user.id)
     ticket.status = new
     if note:
         db.add(Comment(ticket_id=ticket.id, author_id=user.id, body=note, created_at=now))

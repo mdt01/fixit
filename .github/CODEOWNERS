@@ -1,0 +1,4 @@
+# Changes to these files need a review from the security owner.
+app/security.py        @fixit-security-owner
+.agents/permissions.json @fixit-security-owner
+.github/workflows/     @fixit-security-owner
