@@ -18,6 +18,8 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt
       - run: make check                     # ruff, mypy, pytest, bandit
+      - run: make audit                     # known vulnerabilities in dependencies
+      - run: python .agents/checks/no_stray_files.py
 
   mcp-server:
     runs-on: ubuntu-latest

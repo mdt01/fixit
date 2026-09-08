@@ -1,0 +1,17 @@
+{
+  "allow": [
+    "run_bash(make check*)", "run_bash(make test*)", "run_bash(make lint*)",
+    "run_bash(make types*)", "run_bash(python -m pytest*)", "run_bash(pytest*)",
+    "run_bash(ruff *)", "run_bash(mypy *)", "run_bash(bandit *)",
+    "run_bash(git status*)", "run_bash(git diff*)", "run_bash(git log*)"
+  ],
+  "ask": [
+    "run_bash(pip install*)", "run_bash(git commit*)", "edit_file(requirements*.txt)",
+    "edit_file(app/security.py)"
+  ],
+  "deny": [
+    "run_bash(git push*)", "run_bash(*curl *)", "run_bash(*wget *)",
+    "edit_file(.github/workflows/*)", "edit_file(.agents/permissions.json)",
+    "edit_file(.agents/hooks*)", "edit_file(.env*)"
+  ]
+}

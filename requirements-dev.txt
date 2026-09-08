@@ -1,8 +1,9 @@
 # Development and verification tools
 -r requirements.txt
 pytest==8.3.3
-httpx==0.27.2
+httpx2==2.16.0          # used by FastAPI's TestClient
 hypothesis==6.170.9
 ruff==0.17.2
 mypy==2.4.0
 bandit==1.9.4
+pip-audit==2.10.1
