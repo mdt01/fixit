@@ -31,6 +31,7 @@ Each requirement has an id. Tests name the requirement they check (for example,
 ## Reports (wardens only)
 - **R-1** `GET /reports/overdue`: overdue tickets, earliest deadline first.
 - **R-2** `GET /reports/workload`: per technician, active and overdue tickets.
+- **R-3** `GET /reports/overdue.csv`: the overdue report as CSV for spreadsheets.
 
 ## Quality
 - **Q-1** `make check` (lint, types, tests, security scan) passes on every commit.

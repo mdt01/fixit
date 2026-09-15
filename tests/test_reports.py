@@ -24,6 +24,9 @@ def test_overdue_report_lists_late_active_tickets_only(client, db, people):
     db.commit()
     rows = client.get("/reports/overdue", headers=people["vora"][1]).json()
     assert [r["id"] for r in rows] == [late.id] and rows[0]["overdue"] is True
+    csv_text = client.get("/reports/overdue.csv", headers=people["vora"][1]).text
+    assert csv_text.splitlines()[0] == "id,title,category,location,status,due_at"
+    assert len(csv_text.splitlines()) == 2
 
 
 def test_reports_are_for_wardens_only(client, people):
