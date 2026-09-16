@@ -1,0 +1,14 @@
+# Improvement loop (Chapter 16): raise type checking to --strict, a few errors at a time.
+#   python -m minicode.loop run .agents/loops/strict-types.toml --repo .
+name = "strict-types"
+goal = "mypy --strict reports no errors in app/, and all tests still pass."
+check = "python -m mypy --strict app"
+max_iterations = 3
+budget_tokens = 200000
+check_timeout = 300
+maker_prompt = """
+mypy --strict reports type errors in app/ (see the check output below).
+Fix them by adding precise type annotations. Do not use `Any`, `# type: ignore`
+or casts unless there is no precise type, and say why if you do.
+Do not change behaviour. Run `make test` before you finish.
+"""
