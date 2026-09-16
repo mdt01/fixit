@@ -20,7 +20,7 @@ format:
 	$(PY) -m ruff format .
 
 types:
-	$(PY) -m mypy app
+	$(PY) -m mypy --strict app
 
 security:
 	$(PY) -m bandit -q -r app scripts
