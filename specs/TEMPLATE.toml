@@ -1,0 +1,15 @@
+# Copy to specs/<feature>.toml, fill in, review with a teammate, then:
+#   python -m minicode.factory run specs/<feature>.toml --repo . --pause-after plan
+title = ""
+goal = """ """
+context = """Where the code lives (files, functions) and the spec ids involved."""
+acceptance = [
+  "Observable behaviour 1, with the exact values a test will use.",
+]
+out_of_scope = [""]
+verify = ["{python} -m pytest -q -p no:cacheprovider", "{python} -m ruff check .",
+          "{python} .agents/checks/no_stray_files.py"]
+app = "app.main:app"
+health = "/health"
+env = { FIXIT_DB = "sqlite:///{tmp}/preview.db" }
+setup = ["{python} -m scripts.seed"]

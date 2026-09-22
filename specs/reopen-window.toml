@@ -1,0 +1,71 @@
+# Executable specification for the software factory (Capstone, Milestone 9).
+#   python -m minicode.factory run specs/reopen-window.toml --repo . --pause-after plan
+title = "Students can reopen a fixed ticket within 7 days"
+goal = """If a problem comes back after a technician resolved it, the student who
+reported it can reopen the same ticket instead of filing a new one, but only for a
+week, so old tickets stay closed."""
+context = """The life cycle is TRANSITIONS and check_transition() in app/rules.py
+(spec T-3 to T-6). change_status() in app/services.py applies it; the route is
+POST /tickets/{id}/status in app/routers/tickets.py. Tests: tests/test_rules.py and
+tests/test_tickets.py; fixtures people and ticket in tests/conftest.py."""
+acceptance = [
+  "resolved -> open and closed -> open are allowed only for the reporting student (RuleError 'Only the student who reported a ticket can reopen it.' otherwise).",
+  "Reopening is allowed up to and including 7 days after resolved_at; later it fails with a RuleError containing 'within 7 days'.",
+  "A reopened ticket has no assignee, resolved_at is cleared and due_at is recomputed from the reopen time (a fresh SLA).",
+  "check_transition() takes resolved_at and now as optional arguments; tests never use the real clock.",
+  "New tests in tests/test_rules.py and a new tests/test_reopen.py; docs/spec.md gets requirement T-9.",
+]
+out_of_scope = [
+  "Notifications of any kind.",
+  "Changing who may cancel, assign or close tickets.",
+  "Any change to app/security.py, app/models.py or the database schema.",
+]
+verify = [
+  "{python} -m pytest -q -p no:cacheprovider",
+  "{python} -m ruff check .",
+  "{python} .agents/checks/no_stray_files.py",
+]
+
+# Preview deploy on a throw-away database, seeded with the demo accounts
+app = "app.main:app"
+health = "/health"
+env = { FIXIT_DB = "sqlite:///{tmp}/preview.db", FIXIT_DEMO_PASSWORD = "preview-pass" }
+setup = ["{python} -m scripts.seed"]
+
+[[smoke]]
+name = "asha"
+method = "POST"
+path = "/auth/login"
+json = { email = "asha@campus.example", password = "preview-pass" }
+
+[[smoke]]
+name = "kiran"
+method = "POST"
+path = "/auth/login"
+json = { email = "kiran@campus.example", password = "preview-pass" }
+
+[[smoke]]                                   # ticket 1 is assigned to Kiran in the seed data
+method = "POST"
+path = "/tickets/1/status"
+headers = { Authorization = "Bearer {kiran.token}" }
+json = { status = "in_progress" }
+
+[[smoke]]
+method = "POST"
+path = "/tickets/1/status"
+headers = { Authorization = "Bearer {kiran.token}" }
+json = { status = "resolved", note = "Replaced the regulator" }
+
+[[smoke]]
+method = "POST"
+path = "/tickets/1/status"
+headers = { Authorization = "Bearer {asha.token}" }
+json = { status = "open", note = "The fan stopped again" }
+expect_contains = "\"status\":\"open\""
+
+[[smoke]]                          # T-7: technicians cannot see tickets of others
+method = "POST"
+path = "/tickets/2/status"
+headers = { Authorization = "Bearer {kiran.token}" }
+json = { status = "open" }
+expect_status = 404
