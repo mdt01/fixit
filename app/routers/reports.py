@@ -46,5 +46,5 @@ def overdue_csv(db: Session = Depends(get_db), user: User = Depends(warden_only)
 
 
 @router.get("/workload", response_model=list[WorkloadRow])
-def workload(db: Session = Depends(get_db), user: User = Depends(warden_only)) -> list[dict]:
+def workload(db: Session = Depends(get_db), user: User = Depends(warden_only)) -> list[WorkloadRow]:
     return services.workload(db)
