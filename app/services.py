@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import rules
 from app.models import Comment, Ticket, User
 from app.rules import Category, Role, RuleError, Status
-from app.schemas import TicketIn, TicketOut
+from app.schemas import TicketIn, TicketOut, WorkloadRow
 
 log = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ def add_comment(db: Session, user: User, ticket: Ticket, body: str) -> Comment:
     return comment
 
 
-def workload(db: Session, now: datetime | None = None) -> list[dict]:
+def workload(db: Session, now: datetime | None = None) -> list[WorkloadRow]:
     now = now or rules.utcnow()
     rows = []
     for tech in db.scalars(select(User).where(User.role == Role.TECHNICIAN).order_by(User.id)):
@@ -140,6 +140,6 @@ def workload(db: Session, now: datetime | None = None) -> list[dict]:
         active = [t for t in assigned if t.status in rules.ACTIVE]
         overdue = sum(rules.is_overdue(t.status, t.due_at, now) for t in active)
         rows.append(
-            {"technician_id": tech.id, "name": tech.name, "active": len(active), "overdue": overdue}
+            WorkloadRow(technician_id=tech.id, name=tech.name, active=len(active), overdue=overdue)
         )
     return rows
