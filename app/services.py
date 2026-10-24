@@ -108,11 +108,16 @@ def change_status(
         new=new,
         is_reporter=ticket.reporter_id == user.id,
         is_assignee=ticket.assignee_id == user.id,
+        resolved_at=ticket.resolved_at,
+        now=now,
     )
     if new == Status.RESOLVED and not note:
         raise RuleError("Add a note that says what was fixed.")
-    if new == Status.OPEN:  # un-assigned
+    if new == Status.OPEN:  # un-assigned or reopened: start again
         ticket.assignee_id = None
+        if ticket.status in {Status.RESOLVED, Status.CLOSED}:
+            ticket.resolved_at = None
+            ticket.due_at = rules.due_at(now, ticket.category, ticket.priority)
     if new == Status.RESOLVED:
         ticket.resolved_at = now
     log.info("ticket %s: %s -> %s by user %s", ticket.id, ticket.status, new, user.id)

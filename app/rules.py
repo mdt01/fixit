@@ -49,14 +49,15 @@ SLA_HOURS = {
     Category.OTHER: 72,
 }
 URGENT_MIN_HOURS = 4
+REOPEN_DAYS = 7
 
 # The ticket life cycle: which status may follow which.
 TRANSITIONS: dict[Status, set[Status]] = {
     Status.OPEN: {Status.ASSIGNED, Status.CANCELLED},
     Status.ASSIGNED: {Status.IN_PROGRESS, Status.OPEN, Status.CANCELLED},
     Status.IN_PROGRESS: {Status.RESOLVED},
-    Status.RESOLVED: {Status.CLOSED},
-    Status.CLOSED: set(),
+    Status.RESOLVED: {Status.CLOSED, Status.OPEN},
+    Status.CLOSED: {Status.OPEN},
     Status.CANCELLED: set(),
 }
 
@@ -92,10 +93,22 @@ def check_transition(
     new: Status,
     is_reporter: bool,
     is_assignee: bool,
+    resolved_at: datetime | None = None,
+    now: datetime | None = None,
 ) -> None:
     """Raise RuleError unless this user may move a ticket from `current` to `new`."""
     if new not in TRANSITIONS[current]:
         raise RuleError(f"A ticket cannot go from '{current}' to '{new}'.")
+    if current in {Status.RESOLVED, Status.CLOSED} and new == Status.OPEN:
+        if not is_reporter:
+            raise RuleError("Only the student who reported a ticket can reopen it.")
+        now = now or utcnow()
+        if resolved_at is None or now - resolved_at > timedelta(days=REOPEN_DAYS):
+            raise RuleError(
+                f"Tickets can be reopened only within {REOPEN_DAYS} days "
+                "of being resolved. Please report a new ticket."
+            )
+        return
     allowed = {
         Status.ASSIGNED: role == Role.WARDEN,
         Status.OPEN: role == Role.WARDEN,  # un-assign
