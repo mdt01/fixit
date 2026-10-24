@@ -27,6 +27,8 @@ Each requirement has an id. Tests name the requirement they check (for example,
   wardens all tickets. A ticket the user may not see answers 404, exactly like one that
   does not exist.
 - **T-8** A ticket is overdue when it is open, assigned or in progress after its deadline.
+- **T-9** The reporting student can reopen a resolved or closed ticket within 7 days of
+  `resolved_at`. A reopened ticket is unassigned and gets a fresh deadline.
 
 ## Reports (wardens only)
 - **R-1** `GET /reports/overdue`: overdue tickets, earliest deadline first.

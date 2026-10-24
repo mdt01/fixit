@@ -76,7 +76,7 @@ def test_forbidden_moves(role, current, new, reporter, assignee):
 @given(st.lists(st.sampled_from(list(Status)), max_size=12))
 def test_random_walks_stay_on_the_graph(steps):
     """Whatever anyone tries, a ticket only ever moves along TRANSITIONS."""
-    current = Status.OPEN
+    current, resolved = Status.OPEN, None
     for new in steps:
         for role in Role:
             try:
@@ -86,9 +86,26 @@ def test_random_walks_stay_on_the_graph(steps):
                     new=new,
                     is_reporter=True,
                     is_assignee=True,
+                    resolved_at=resolved,
+                    now=T0,
                 )
             except RuleError:
                 continue
             assert new in TRANSITIONS[current]
-            current = new
+            current, resolved = new, (T0 if new == Status.RESOLVED else resolved)
             break
+
+
+def test_reopen_window():
+    kw = {
+        "role": Role.STUDENT,
+        "current": Status.RESOLVED,
+        "new": Status.OPEN,
+        "is_assignee": False,
+        "resolved_at": T0,
+    }
+    check_transition(is_reporter=True, now=T0 + timedelta(days=7), **kw)
+    with pytest.raises(RuleError, match="within 7 days"):
+        check_transition(is_reporter=True, now=T0 + timedelta(days=7, seconds=1), **kw)
+    with pytest.raises(RuleError, match="Only the student"):
+        check_transition(is_reporter=False, now=T0 + timedelta(days=1), **kw)
